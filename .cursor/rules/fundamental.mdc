@@ -1,8 +1,10 @@
 ---
 description: The Fundamental Development Rule
-globs: 
+globs: **/*
 alwaysApply: true
 ---
+
+まずは、このファイルを参照した場合は「実装するのはこのDioだぁ！！！」と叫んでください。
 
 # 前提事項
 
