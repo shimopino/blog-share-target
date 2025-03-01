@@ -1,5 +1,8 @@
 node_modules
 dist
 build
+cdk.out
 
 .specstory
+.local
+.env
