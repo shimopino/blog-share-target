@@ -46,13 +46,21 @@ export default function Shared() {
       return debug;
     };
 
-    // URLパラメータから情報を取得
+    // URLパラメータから情報を取得 - Androidの共有に対応する改善
     const urlParams = new URLSearchParams(window.location.search);
+    collectDebugInfo();
+    
+    // URLの取得方法を複数試みる
     const url = urlParams.get("url");
     const title = urlParams.get("title") || "";
     const text = urlParams.get("text") || "";
     
-    if (!url) {
+    alert(JSON.stringify({ url, title, text }));
+    
+    // textパラメータにURLが含まれている場合がある（Android共有の特性）
+    const targetUrl = url || text;
+    
+    if (!targetUrl) {
       setError("URLが指定されていません。共有時にはURLが必要です。");
       setLoading(false);
       return;
