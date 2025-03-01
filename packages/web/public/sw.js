@@ -25,13 +25,62 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  // ナビゲーションリクエストの場合（HTML）
+  if (event.request.mode === "navigate") {
+    event.respondWith(
+      fetch(event.request).catch(() => {
+        // オフラインの場合はindex.htmlを返す（SPAルーティング用）
+        return caches.match("/index.html");
+      })
+    );
+    return;
+  }
+
   // 通常のリクエストの場合はキャッシュファーストで対応
   event.respondWith(
     caches.match(event.request).then((response) => {
       if (response) {
         return response;
       }
-      return fetch(event.request);
+
+      // コピーを作成（リクエストは一度しか使えないため）
+      const fetchRequest = event.request.clone();
+
+      return fetch(fetchRequest)
+        .then((response) => {
+          // 無効なレスポンスの場合はそのまま返す
+          if (
+            !response ||
+            response.status !== 200 ||
+            response.type !== "basic"
+          ) {
+            return response;
+          }
+
+          // レスポンスのコピーを作成（レスポンスも一度しか使えないため）
+          const responseToCache = response.clone();
+
+          // キャッシュに保存
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseToCache);
+          });
+
+          return response;
+        })
+        .catch(() => {
+          // オフラインでアセットがキャッシュにない場合
+          // 画像の場合は代替画像を返す、またはそのままエラーにする
+          if (event.request.url.match(/\.(jpg|jpeg|png|gif|svg)$/)) {
+            return caches.match("/icon-192x192.png");
+          }
+          // その他のリソースはエラーのまま
+          return new Response("Network error occurred", {
+            status: 503,
+            headers: new Headers({
+              "Content-Type": "text/plain",
+            }),
+          });
+        });
     })
   );
 });

@@ -1,5 +1,5 @@
-import { useLoaderData, useSearchParams } from "react-router";
-import type { LoaderFunctionArgs } from "react-router";
+import { useSearchParams } from "react-router";
+import { useEffect, useState } from "react";
 
 export function meta() {
   return [
@@ -14,31 +14,26 @@ interface ShareData {
   url: string;
 }
 
-export function loader({
-  request,
-}: LoaderFunctionArgs): ShareData {
-  // URLからクエリパラメータを取得
-  const url = new URL(request.url);
-  const title = url.searchParams.get("title") || "";
-  const text = url.searchParams.get("text") || "";
-  const sharedUrl = url.searchParams.get("url") || "";
-
-  return {
-    title,
-    text,
-    url: sharedUrl,
-  };
-}
-
 export default function ShareTarget() {
-  // useLoaderDataにジェネリック型を指定
-  const { title, text, url } = useLoaderData() as ShareData;
   const [searchParams] = useSearchParams();
+  const [shareData, setShareData] = useState<ShareData>({
+    title: "",
+    text: "",
+    url: "",
+  });
 
-  // URLクエリパラメータから直接読み取ることもできます
-  const titleParam = searchParams.get("title");
-  const textParam = searchParams.get("text");
-  const urlParam = searchParams.get("url");
+  useEffect(() => {
+    // URLクエリパラメータから共有データを取得
+    const title = searchParams.get("title") || "";
+    const text = searchParams.get("text") || "";
+    const url = searchParams.get("url") || "";
+
+    setShareData({
+      title,
+      text,
+      url,
+    });
+  }, [searchParams]);
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -49,24 +44,24 @@ export default function ShareTarget() {
         
         <div className="mb-4">
           <h3 className="font-medium text-gray-700">タイトル:</h3>
-          <p className="mt-1">{title || "（タイトルなし）"}</p>
+          <p className="mt-1">{shareData.title || "（タイトルなし）"}</p>
         </div>
         
         <div className="mb-4">
           <h3 className="font-medium text-gray-700">テキスト:</h3>
-          <p className="mt-1">{text || "（テキストなし）"}</p>
+          <p className="mt-1">{shareData.text || "（テキストなし）"}</p>
         </div>
         
         <div className="mb-4">
           <h3 className="font-medium text-gray-700">URL:</h3>
-          {url ? (
+          {shareData.url ? (
             <a
-              href={url}
+              href={shareData.url}
               target="_blank"
               rel="noopener noreferrer"
               className="mt-1 text-blue-600 hover:underline break-all"
             >
-              {url}
+              {shareData.url}
             </a>
           ) : (
             <p className="mt-1">（URLなし）</p>
