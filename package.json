@@ -1,0 +1,14 @@
+{
+  "name": "blog-share-target",
+  "author": "keisuke.shimokawa",
+  "version": "1.0.0",
+  "license": "ISC",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "lint": "npm run lint --workspaces",
+    "format": "npm run format --workspaces"
+  }
+}
