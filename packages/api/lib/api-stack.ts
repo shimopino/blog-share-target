@@ -37,7 +37,6 @@ export class ApiStack extends cdk.Stack {
 				bundling: {
 					minify: true,
 					sourceMap: true,
-					// nodeModules: ["neverthrow"],
 					externalModules: [
 						"@aws-sdk/client-dynamodb",
 						"@aws-sdk/lib-dynamodb",
@@ -63,7 +62,9 @@ export class ApiStack extends cdk.Stack {
 		const shareResource = api.root.addResource("share");
 		shareResource.addMethod(
 			"POST",
-			new apigateway.LambdaIntegration(shareArticleFunction),
+			new apigateway.LambdaIntegration(shareArticleFunction, {
+				proxy: true,
+			}),
 		);
 
 		// CDK出力の定義

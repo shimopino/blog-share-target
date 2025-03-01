@@ -1,6 +1,7 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, PutCommand } from "@aws-sdk/lib-dynamodb";
 import { type Result, err, ok } from "neverthrow";
+import type { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 
 const client = new DynamoDBClient({});
 const docClient = DynamoDBDocumentClient.from(client);
@@ -23,7 +24,7 @@ interface APIGatewayEvent {
 
 // 入力検証関数
 const validateInput = (
-	event: APIGatewayEvent,
+	event: APIGatewayProxyEvent,
 ): Result<ShareEvent, ApiError> => {
 	if (!event.body) {
 		return err({ type: "invalidInput", message: "Request body is missing" });
@@ -82,7 +83,9 @@ const saveToDatabase = async (
 	}
 };
 
-export const handler = async (event: APIGatewayEvent) => {
+export const handler = async (
+	event: APIGatewayProxyEvent,
+): Promise<APIGatewayProxyResult> => {
 	console.log("Received event:", JSON.stringify(event, null, 2));
 
 	// CORS ヘッダー
