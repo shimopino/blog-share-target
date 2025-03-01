@@ -36,6 +36,16 @@ export const links: Route.LinksFunction = () => [
 export function Layout({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     registerServiceWorker();
+    
+    // Service Workerからのメッセージをリッスン
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.addEventListener('message', (event) => {
+        if (event.data && event.data.type === 'SET_SHARE_FLAG') {
+          sessionStorage.setItem('shareInProgress', 'true');
+          console.log('Share in progress flag set');
+        }
+      });
+    }
   }, []);
   
   return (

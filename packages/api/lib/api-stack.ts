@@ -60,9 +60,10 @@ export class ApiStack extends cdk.Stack {
 				allowOrigins: apigateway.Cors.ALL_ORIGINS,
 				allowMethods: apigateway.Cors.ALL_METHODS,
 			},
-			// deployOptions
-			// デフォルトで prod というステージが作成される
-			// レート制限もデフォルトの設定値が適用される
+			deployOptions: {
+				stageName: "api",
+				// レート制限もデフォルトの設定値が適用される
+			},
 		});
 
 		// エンドポイントの作成
@@ -109,6 +110,13 @@ export class ApiStack extends cdk.Stack {
 					httpStatus: 404,
 					responseHttpStatus: 200,
 					responsePagePath: "/index.html", // SPAルーティング用
+				},
+				// Origin Access Controllを付与している場合、存在しないパスに対して 403 のレスポンスを返すことがある
+				// その場合は 403 のレスポンスを 200 に変更して SPA ルーティングにリダイレクトする
+				{
+					httpStatus: 403,
+					responseHttpStatus: 200,
+					responsePagePath: "/index.html",
 				},
 			],
 		});

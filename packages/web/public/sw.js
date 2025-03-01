@@ -18,10 +18,61 @@ self.addEventListener("install", (event) => {
 
 // ネットワークリクエストの制御
 self.addEventListener("fetch", (event) => {
-  // Web Share Targetからのリクエストの場合
-  if (event.request.url.includes("/share-target")) {
-    // ここでは単純にリクエストを通過させる
-    // 実際のアプリでは、共有データを処理するロジックを追加する
+  // Web Share Target POSTリクエストの処理
+  if (
+    event.request.method === "POST" &&
+    event.request.url.includes("/share-target")
+  ) {
+    event.respondWith(
+      (async () => {
+        // フォームデータを抽出
+        const formData = await event.request.formData();
+        const url = formData.get("url") || "";
+        const title = formData.get("title") || "";
+        const text = formData.get("text") || "";
+
+        // セッションフラグを設定するためにクライアントに通知
+        const allClients = await self.clients.matchAll({
+          includeUncontrolled: true,
+        });
+
+        for (const client of allClients) {
+          client.postMessage({
+            type: "SET_SHARE_FLAG",
+            value: true,
+          });
+        }
+
+        // バックグラウンドで API を呼び出す
+        event.waitUntil(
+          (async () => {
+            try {
+              // API GatewayのURLに変更
+              const response = await fetch("/api/share", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  url,
+                  title,
+                  text,
+                }),
+              });
+
+              if (!response.ok) {
+                console.error("API request failed:", await response.text());
+              }
+            } catch (error) {
+              console.error("Failed to send data to API:", error);
+            }
+          })()
+        );
+
+        // ユーザーに成功メッセージを表示するページにリダイレクト
+        return Response.redirect("/share-success", 303);
+      })()
+    );
     return;
   }
 

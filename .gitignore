@@ -6,3 +6,4 @@ cdk.out
 .specstory
 .local
 .env
+.DS_Store
