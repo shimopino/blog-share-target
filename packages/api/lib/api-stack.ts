@@ -84,7 +84,9 @@ export class ApiStack extends cdk.Stack {
 		// CloudFront ディストリビューションの作成
 		const distribution = new cloudfront.Distribution(this, "Distribution", {
 			defaultBehavior: {
-				origin: new origins.S3StaticWebsiteOrigin(websiteBucket),
+				origin: origins.S3BucketOrigin.withOriginAccessControl(websiteBucket, {
+					originAccessLevels: [cloudfront.AccessLevel.READ],
+				}),
 				viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
 				allowedMethods: cloudfront.AllowedMethods.ALLOW_GET_HEAD,
 				cachedMethods: cloudfront.CachedMethods.CACHE_GET_HEAD,
