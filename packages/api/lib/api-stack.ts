@@ -56,6 +56,9 @@ export class ApiStack extends cdk.Stack {
 				allowOrigins: apigateway.Cors.ALL_ORIGINS,
 				allowMethods: apigateway.Cors.ALL_METHODS,
 			},
+			// deployOptions
+			// デフォルトで prod というステージが作成される
+			// レート制限もデフォルトの設定値が適用される
 		});
 
 		// エンドポイントの作成
