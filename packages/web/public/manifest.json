@@ -22,9 +22,9 @@
     "action": "/shared",
     "method": "GET",
     "params": {
-      "title": "title",
       "text": "text",
-      "url": "url"
+      "url": "url",
+      "title": "title"
     }
   }
 } 

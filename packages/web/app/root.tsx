@@ -11,6 +11,7 @@ import { useEffect } from "react";
 import type { Route } from "./+types/root";
 import "./app.css";
 import { registerServiceWorker } from "./sw-register";
+import { ThemeProvider } from "./contexts/ThemeContext";
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -81,17 +82,20 @@ export function Layout({ children }: { children: React.ReactNode }) {
   }, []);
   
   return (
-    <html lang="en">
+    <html lang="ja" className="h-full">
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta name="theme-color" content="#4285f4" />
+        <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff" />
+        <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0f172a" />
         <base href="/" />
         <Meta />
         <Links />
       </head>
-      <body>
-        {children}
+      <body className="h-full">
+        <ThemeProvider>
+          {children}
+        </ThemeProvider>
         <ScrollRestoration />
         <Scripts />
       </body>
