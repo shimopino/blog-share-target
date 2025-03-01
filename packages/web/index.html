@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ブログ記事要約アプリ</title>
+  <!-- MSWをローカル環境で初期化 -->
+  <script>
+    // ローカル開発環境でのみMSWを初期化
+    if (process.env.NODE_ENV === 'development') {
+      const { worker } = await import('./src/mocks/browser');
+      worker.start({
+        onUnhandledRequest: 'bypass'
+      });
+    }
+  </script>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="module" src="/app/entry.client.tsx"></script>
+</body>
+</html> 

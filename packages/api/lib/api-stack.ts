@@ -94,12 +94,14 @@ export class ApiStack extends cdk.Stack {
 			},
 			additionalBehaviors: {
 				"/api/*": {
-					origin: new origins.RestApiOrigin(api),
+					origin: new origins.RestApiOrigin(api, {
+						originPath: "",
+					}),
 					viewerProtocolPolicy:
 						cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
 					allowedMethods: cloudfront.AllowedMethods.ALLOW_ALL,
 					cachedMethods: cloudfront.CachedMethods.CACHE_GET_HEAD,
-					cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED, // APIレスポンスはキャッシュしない
+					cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED,
 					originRequestPolicy:
 						cloudfront.OriginRequestPolicy.ALL_VIEWER_EXCEPT_HOST_HEADER,
 				},
@@ -110,6 +112,8 @@ export class ApiStack extends cdk.Stack {
 					httpStatus: 404,
 					responseHttpStatus: 200,
 					responsePagePath: "/index.html", // SPAルーティング用
+					// "/api/" で始まるパスは除外するためのTTL設定
+					ttl: cdk.Duration.seconds(0),
 				},
 				// Origin Access Controllを付与している場合、存在しないパスに対して 403 のレスポンスを返すことがある
 				// その場合は 403 のレスポンスを 200 に変更して SPA ルーティングにリダイレクトする
@@ -117,6 +121,8 @@ export class ApiStack extends cdk.Stack {
 					httpStatus: 403,
 					responseHttpStatus: 200,
 					responsePagePath: "/index.html",
+					// "/api/" で始まるパスは除外するためのTTL設定
+					ttl: cdk.Duration.seconds(0),
 				},
 			],
 		});

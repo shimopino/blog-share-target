@@ -18,20 +18,26 @@ self.addEventListener("install", (event) => {
 
 // ネットワークリクエストの制御
 self.addEventListener("fetch", (event) => {
-  // Web Share Target POSTリクエストの処理
+  // /sharedへのナビゲーションリクエストは最優先で処理（共有機能用）
   if (
-    event.request.method === "POST" &&
-    event.request.url.includes("/share-target")
+    event.request.mode === "navigate" &&
+    event.request.url.includes("/shared")
   ) {
-    event.respondWith(
-      (async () => {
-        // フォームデータを抽出
-        const formData = await event.request.formData();
-        const url = formData.get("url") || "";
-        const title = formData.get("title") || "";
-        const text = formData.get("text") || "";
+    console.log("[SW] 共有リクエスト検出:", event.request.url);
 
-        // セッションフラグを設定するためにクライアントに通知
+    // URLパラメータの解析とデバッグ
+    const url = new URL(event.request.url);
+    const params = url.searchParams;
+    console.log("[SW] 検出されたパラメータ:", {
+      url: params.get("url"),
+      title: params.get("title"),
+      text: params.get("text"),
+      raw: url.search,
+    });
+
+    // セッションフラグを設定するためにクライアントに通知
+    event.waitUntil(
+      (async () => {
         const allClients = await self.clients.matchAll({
           includeUncontrolled: true,
         });
@@ -40,43 +46,28 @@ self.addEventListener("fetch", (event) => {
           client.postMessage({
             type: "SET_SHARE_FLAG",
             value: true,
+            debugInfo: {
+              url: params.get("url"),
+              title: params.get("title"),
+              text: params.get("text"),
+              raw: url.search,
+            },
           });
         }
-
-        // バックグラウンドで API を呼び出す
-        event.waitUntil(
-          (async () => {
-            try {
-              // API GatewayのURLに変更
-              const response = await fetch("/api/share", {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                  url,
-                  title,
-                  text,
-                }),
-              });
-
-              if (!response.ok) {
-                console.error("API request failed:", await response.text());
-              }
-            } catch (error) {
-              console.error("Failed to send data to API:", error);
-            }
-          })()
-        );
-
-        // ユーザーに成功メッセージを表示するページにリダイレクト
-        return Response.redirect("/share-success", 303);
       })()
+    );
+
+    // 通常のフェッチを続行
+    event.respondWith(
+      fetch(event.request).catch(() => {
+        // オフラインの場合はindex.htmlを返す
+        return caches.match("/index.html");
+      })
     );
     return;
   }
 
-  // ナビゲーションリクエストの場合（HTML）
+  // その他のナビゲーションリクエストの場合（HTML）
   if (event.request.mode === "navigate") {
     event.respondWith(
       fetch(event.request).catch(() => {
@@ -150,4 +141,14 @@ self.addEventListener("activate", (event) => {
       );
     })
   );
+
+  // 即座にクライアントコントロールを取得
+  event.waitUntil(self.clients.claim());
+});
+
+// メッセージイベントのリスナー追加（skipWaiting用）
+self.addEventListener("message", (event) => {
+  if (event.data && event.data.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
 });

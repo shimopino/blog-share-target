@@ -37,15 +37,47 @@ export function Layout({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     registerServiceWorker();
     
-    // Service Workerからのメッセージをリッスン
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.addEventListener('message', (event) => {
-        if (event.data && event.data.type === 'SET_SHARE_FLAG') {
-          sessionStorage.setItem('shareInProgress', 'true');
-          console.log('Share in progress flag set');
+    // Service Workerからのメッセージを処理
+    const handleServiceWorkerMessage = (event: MessageEvent) => {
+      if (event.data && event.data.type === 'SET_SHARE_FLAG') {
+        sessionStorage.setItem('shareInProgress', 'true');
+      }
+      
+      // その他のService Workerメッセージ処理をここに追加
+    };
+    
+    // Service Workerの更新チェック
+    const checkForServiceWorkerUpdate = async () => {
+      if ('serviceWorker' in navigator) {
+        const registration = await navigator.serviceWorker.getRegistration();
+        if (registration?.waiting) {
+          // 新しいServiceWorkerが待機中の場合
+          console.log('New Service Worker available, updating...');
+          registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+          
+          // ページを再読み込みして新しいServiceWorkerを有効化
+          window.location.reload();
         }
+      }
+    };
+    
+    // ServiceWorkerの更新イベント処理
+    const handleServiceWorkerUpdate = () => {
+      window.addEventListener('controllerchange', () => {
+        console.log('Service Worker controller changed, reloading page');
+        window.location.reload();
       });
-    }
+    };
+    
+    // イベントリスナーを設定
+    navigator.serviceWorker.addEventListener('message', handleServiceWorkerMessage);
+    checkForServiceWorkerUpdate();
+    handleServiceWorkerUpdate();
+    
+    // クリーンアップ
+    return () => {
+      navigator.serviceWorker.removeEventListener('message', handleServiceWorkerMessage);
+    };
   }, []);
   
   return (
