@@ -1,3 +1,4 @@
+[config]
 model = "bedrock/amazon.nova-pro-v1:0"
 model_turbo = "bedrock/amazon.nova-pro-v1:0"
 fallback_models = ["bedrock/amazon.nova-lite-v1:0"]
