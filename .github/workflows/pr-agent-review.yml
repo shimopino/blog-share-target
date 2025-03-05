@@ -4,6 +4,7 @@ description: "PR Agent Review"
 on:
   pull_request:
     types: [opened, synchronize]
+  issue_comment:
 
 jobs:
   review:
