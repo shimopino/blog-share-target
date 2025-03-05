@@ -27,7 +27,7 @@ push_commands = [
 
 # https://blog.kinto-technologies.com/posts/2024-06-17-pr-agent/
 [pr_reviewer] # /review #
-extra_instructions = "answer in Japanese"
+extra_instructions = "/review コマンドの結果は日本語で回答してください"
 
 [pr_description] # /describe #
-extra_instructions = "answer in Japanese"
+extra_instructions = "/describe コマンドの結果は日本語で回答してください"
