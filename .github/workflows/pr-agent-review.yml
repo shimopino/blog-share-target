@@ -17,7 +17,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - uses: aws-actions/configure-aws-credentials@v2
+
+      # https://github.com/aws-actions/configure-aws-credentials
+      - uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::998141369043:role/GitHubActionsPrAgentRole
           role-session-name: github-actions-pr-agent
