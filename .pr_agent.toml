@@ -5,6 +5,9 @@ fallback_models = ["bedrock/amazon.nova-lite-v1:0"]
 
 response_language = "ja-JP" # https://docs.oracle.com/cd/F25597_01/document/products/wli/docs92/xref/xqisocodes.html
 
+custom_model_max_tokens = 8000
+max_model_tokens = 32000
+
 [github_app]
 handle_push_trigger = true
 push_trigger_ignore_bot_commits = true
@@ -16,3 +19,4 @@ push_commands = [
     "/describe",
     "/review",
 ]
+
