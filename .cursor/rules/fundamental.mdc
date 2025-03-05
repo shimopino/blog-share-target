@@ -1,6 +1,6 @@
 ---
 description: The Fundamental Development Rule
-globs: **/*
+globs: 
 alwaysApply: true
 ---
 
