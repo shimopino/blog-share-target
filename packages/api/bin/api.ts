@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import * as cdk from "aws-cdk-lib";
 import { ApiStack } from "../lib/api-stack";
+import { GitHubOidcRoleStack } from "../lib/github-oicd-stack";
 
 const app = new cdk.App();
 new ApiStack(app, "WebShareTargetApiStack", {
@@ -26,5 +27,18 @@ new ApiStack(app, "WebShareTargetApiStack", {
 		Project: "WebShareTarget",
 		Environment: "Development",
 		Service: "API",
+	},
+});
+
+new GitHubOidcRoleStack(app, "GitHubOidcRoleStack", {
+	repoName: "shimopino/blog-share-target",
+	env: {
+		account: process.env.CDK_DEFAULT_ACCOUNT,
+		region: process.env.CDK_DEFAULT_REGION,
+	},
+	tags: {
+		Project: "WebShareTarget",
+		Environment: "Development",
+		Service: "GitHubActions",
 	},
 });
