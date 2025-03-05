@@ -1,0 +1,35 @@
+name: PR Agent Review
+description: "PR Agent Review"
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.sender.type != 'Bot' }}
+
+    permissions:
+      issues: write
+      pull-requests: write
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: arn:aws:iam::998141369043:role/GitHubActionsPrAgentRole
+          role-session-name: github-actions-pr-agent
+          aws-region: ap-northeast-1
+
+      # https://qodo-merge-docs.qodo.ai/installation/github/
+      - name: PR Agent action step
+        id: pragent
+        uses: qodo-ai/pr-agent@main
+        env:
+          OPENAI_KEY: ""
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          github_action_config.auto_review: "true" # enable\disable auto review
+          github_action_config.auto_describe: "true" # enable\disable auto describe
+          github_action_config.auto_improve: "true" # enable\disable auto improve
