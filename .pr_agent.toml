@@ -23,3 +23,9 @@ push_commands = [
     "/review",
 ]
 
+# https://blog.kinto-technologies.com/posts/2024-06-17-pr-agent/
+[pr_reviewer] # /review #
+extra_instructions = "answer in Japanese"
+
+[pr_description] # /describe #
+extra_instructions = "answer in Japanese"
