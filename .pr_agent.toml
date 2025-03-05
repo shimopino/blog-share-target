@@ -1,7 +1,7 @@
 [config]
-model = "bedrock/anthropic.claude-3-5-sonnet-20241022-v2:0"
+model = "bedrock/apac.anthropic.claude-3-5-sonnet-20240620-v1:0"
 # model = "bedrock/amazon.nova-pro-v1:0"
-model_turbo = "bedrock/anthropic.claude-3-5-sonnet-20241022-v2:0"
+model_turbo = "bedrock/apac.anthropic.claude-3-5-sonnet-20240620-v1:0"
 # model_turbo = "bedrock/amazon.nova-pro-v1:0"
 fallback_models = []
 # fallback_models = ["bedrock/amazon.nova-lite-v1:0"]
