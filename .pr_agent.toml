@@ -1,9 +1,11 @@
+# https://docs.aws.amazon.com/ja_jp/bedrock/latest/userguide/inference-profiles-support.html
+
 [config]
-model = "bedrock/apac.amazon.nova-pro-v1:0"
+model = "bedrock/apac.anthropic.claude-3-5-sonnet-20240620-v1:0"
 # model = "bedrock/amazon.nova-pro-v1:0"
-model_turbo = "bedrock/apac.amazon.nova-pro-v1:0"
+model_turbo = "bedrock/apac.anthropic.claude-3-5-sonnet-20240620-v1:0"
 # model_turbo = "bedrock/amazon.nova-pro-v1:0"
-fallback_models = ["bedrock/apac.amazon.nova-lite-v1:0"]
+fallback_models = ["bedrock/apac.amazon.nova-pro-v1:0"]
 # fallback_models = ["bedrock/amazon.nova-lite-v1:0"]
 
 response_language = "ja-JP" # https://docs.oracle.com/cd/F25597_01/document/products/wli/docs92/xref/xqisocodes.html
