@@ -40,6 +40,9 @@ export class GitHubOidcRoleStack extends cdk.Stack {
 					"logs:CreateLogGroup",
 					"logs:CreateLogStream",
 					"logs:PutLogEvents",
+					// Bedrockの権限を追加
+					"bedrock:InvokeModel",
+					"bedrock:InvokeModelWithResponseStream",
 				],
 				resources: ["*"],
 			}),
