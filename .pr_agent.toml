@@ -30,4 +30,23 @@ push_commands = [
 extra_instructions = "/review コマンドの結果は日本語で回答してください"
 
 [pr_description] # /describe #
-extra_instructions = "/describe コマンドの結果は日本語で回答してください"
+generate_ai_title = true  # タイトル生成を有効化
+title_format = "feat|fix|docs|style|refactor|test|chore({scope}): {description}"  # タイトルのフォーマットを指定
+
+# タイトル生成のための追加指示
+extra_instructions = """
+タイトルは以下のフォーマットで生成してください：
+
+<format>
+- プレフィックス: feat|fix|docs|style|refactor|test|chore
+- スコープ: 変更の影響範囲を()で囲む
+- 説明: 変更内容を簡潔に記述（日本語可）
+
+例：
+- feat(auth): ログイン機能の実装
+- fix(api): データ取得時のバリデーションバグを修正
+- docs(readme): インストール手順の更新
+</format>
+
+/describe コマンドの結果は日本語で回答してください
+"""
