@@ -6,22 +6,503 @@ alwaysApply: true
 
 このプロジェクトルールが参照されたことをチャットでユーザーに通知するために、このファイルを参照した場合は「オレは今からフロントを実装するぞ！ジョジョ！！」と叫んでください。
 
-# フロントエンドの開発ルール
+# フロントエンド開発ガイドライン
 
 ## 技術スタック
 
-- React Router: ^7.0.0
-  - 機能は Cursor Editor に登録した「React Router v7.1.1」のドキュメント（Docs）を参照する
-- React: ^19.0.0
-- Tailwind: ^4.0.0
-  - 機能は Cursor Editor に登録した「Tailwind CSS v4」のドキュメント（Docs）を参照する
-- TypeScript: ^5.0.0
-- Node.js: ^22.0.0  
-- @biomejs/biome: ^1.9.0,
+- **React**: v19.0.0
+- **React Router**: v7.0.0
+- **TypeScript**: v5.0.0
+- **Tailwind CSS**: v4.0.0
+- **Node.js**: v22.0.0
+- **Biome**: v1.9.0
 
-## 実装の指針
+## 基本設計原則
 
-- コンポーネントを作成する場合、純粋なロジックは関数として切り出す方針を採用する
-- ボタンやカードなど、再利用する可能性の高いコンポーネントは、コンポーネントライブラリとして切り出してください
-- React Router v7 では、開発中は npm run dev でサーバーを起動し続けておくことで、自動的にルーティングの型を生成することができる
-  - このサーバー起動はユーザー側が実行するため、あなたはサーバーが起動していることを前提に ./+types の型エラーは無視して構いません
+### コンポーネント実装
+
+1. **純粋関数としてのコンポーネント設計**
+   - ロジックとUIを明確に分離する
+   - 再利用可能なユーティリティ関数は個別に切り出す
+   - プレゼンテーションとコンテナコンポーネントを分ける
+
+2. **コンポーネントライブラリ化**
+   - ボタン、カード、フォームなど共通UIコンポーネントは再利用可能なライブラリとして実装
+   - 一貫したスタイリングとプロパティ設計を維持
+   - 類似コンポーネントはバリエーションとしてプロパティで制御
+
+3. **React Router v7 の活用**
+   - 状態管理を URL に集約（クエリパラメータ、パスパラメータ）
+   - データフェッチは loader 関数内に集約
+   - フォーム送信処理は action 関数内に集約
+   - URL を真実の源泉 (source of truth) として扱う
+
+### ルーティング設計
+
+1. **コンフィグベースのルーティング**
+   - `routes.ts` ファイルでアプリケーション全体のルーティングを集中管理
+   - `index()`, `route()`, `layout()`, `prefix()` 関数を活用した宣言的なルート定義
+   - 階層構造を視覚的に表現できるネスト構造の活用
+
+2. **レイアウトシステムの活用**
+   - 共通UI要素（ヘッダー、サイドバー、フッターなど）はレイアウトコンポーネントとして実装
+   - `layout()` 関数と `<Outlet />` コンポーネントを使用したネスト構造の実現
+   - ルートごとの個別レイアウトとグローバルレイアウトの適切な使い分け
+
+3. **パスプレフィックスの活用**
+   - 機能やリソースごとに適切なURL構造の設計
+   - `prefix()` 関数によるパスのグループ化
+   - 一貫性のあるAPI的なURLパス設計
+
+## レンダリング戦略
+
+### 1. サーバーサイドレンダリング (SSR)
+
+- **適用ケース**: データの取得が必要なページ、SEO重視のページ、APIキーなど機密情報を使用するページ
+- **実装方法**: `loader` 関数を使用したサーバーサイドでのデータ取得
+
+```typescript
+// SSR用のloader関数
+export async function loader({ params }: Route.LoaderArgs) {
+  // APIからデータを取得（サーバー側で実行される）
+  const response = await fetch(`/api/articles/${params.id}`, {
+    headers: { 
+      "Authorization": `Bearer ${process.env.API_KEY}` // 安全にAPIキーを使用
+    }
+  });
+  const article = await response.json();
+  
+  return { article, error: null };
+}
+
+// 純粋関数としてのコンポーネント
+export default function Article({ loaderData }: Route.ComponentProps) {
+  const { article, error } = loaderData;
+  
+  if (error) return <ErrorComponent message={error} />;
+  return <ArticleView article={article} />;
+}
+```
+
+### 2. 静的サイト生成 (SSG)
+
+- **適用ケース**: 更新頻度の低いページ、ブログ記事、ドキュメント、ランディングページ
+- **実装方法**: `react-router.config.ts` の `prerender` 関数でパスを指定
+
+```typescript
+// react-router.config.ts
+import type { Config } from "@react-router/dev/config";
+
+export default {
+  ssr: true,
+  // SSGで生成するパスを指定
+  async prerender() {
+    return [
+      "/about",
+      "/articles/popular",
+      // 動的なパスも指定可能
+      ...await fetchAllArticlePaths()
+    ];
+  },
+} satisfies Config;
+```
+
+### 3. クライアントサイドレンダリング (CSR)
+
+- **適用ケース**: インタラクティブなコンポーネント、検索機能、管理画面、頻繁に更新が必要なUI
+- **実装方法**: `clientLoader` 関数または `useFetcher` を使用
+
+```typescript
+// CSR用のclientLoader関数
+export async function clientLoader({ params }: Route.ClientLoaderArgs) {
+  const response = await fetch(`/api/articles?category=${params.category}`);
+  const articles = await response.json();
+  
+  return { articles };
+}
+
+// クライアントサイドで動作するコンポーネント
+export default function ArticleList({ loaderData }: Route.ComponentProps) {
+  const { articles } = loaderData;
+  return (
+    <div className="grid grid-cols-3 gap-4">
+      {articles.map(article => (
+        <ArticleCard key={article.id} article={article} />
+      ))}
+    </div>
+  );
+}
+```
+
+## インタラクティブUI実装
+
+### 1. フォーム送信パターン
+
+```typescript
+// サーバーサイド処理用 action 関数
+export async function action({ request }: Route.ActionArgs) {
+  const formData = await request.formData();
+  const title = formData.get("title");
+  
+  const response = await fetch("/api/articles", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ title })
+  });
+  
+  return await response.json();
+}
+
+// フォームコンポーネント
+export default function CreateArticle({ actionData }: Route.ComponentProps) {
+  return (
+    <Form method="post">
+      {actionData?.error && <ErrorMessage error={actionData.error} />}
+      <label htmlFor="title">タイトル</label>
+      <input id="title" type="text" name="title" />
+      <button type="submit">作成</button>
+    </Form>
+  );
+}
+```
+
+### 2. クライアントアクション処理パターン
+
+```typescript
+// クライアントサイドで処理するaction
+export async function clientAction({ request }: Route.ClientActionArgs) {
+  const formData = await request.formData();
+  const { _action } = Object.fromEntries(formData);
+  
+  switch (_action) {
+    case "search": {
+      const keywords = formData.get("keywords");
+      const results = await searchArticles(keywords);
+      return { results };
+    }
+    case "favorite": {
+      const articleId = formData.get("articleId");
+      await toggleFavorite(articleId);
+      return { success: true };
+    }
+    default:
+      return { error: "Unknown action" };
+  }
+}
+
+// フェッチャーを使用した実装
+export default function SearchPage() {
+  const fetcher = useFetcher();
+  const formRef = useRef(null);
+  
+  // フォームリセットなどの副作用処理
+  useEffect(() => {
+    if (fetcher.state === "idle" && fetcher.data?.success) {
+      formRef.current?.reset();
+    }
+  }, [fetcher]);
+  
+  return (
+    <div>
+      <fetcher.Form method="post" ref={formRef}>
+        <input type="text" name="keywords" />
+        <button type="submit" name="_action" value="search">検索</button>
+      </fetcher.Form>
+      
+      {fetcher.data?.results && (
+        <ResultList results={fetcher.data.results} />
+      )}
+    </div>
+  );
+}
+```
+
+### 3. クエリパラメータによる状態管理
+
+```typescript
+// クエリパラメータでフィルタリング・ページング
+export async function loader({ request }: Route.LoaderArgs) {
+  const url = new URL(request.url);
+  const page = parseInt(url.searchParams.get("page") || "1");
+  const category = url.searchParams.get("category") || "";
+  
+  const articles = await fetchArticles({ page, category });
+  
+  return { articles, page, category };
+}
+
+// リスト表示コンポーネント
+export default function ArticleList({ loaderData }: Route.ComponentProps) {
+  const { articles, page, category } = loaderData;
+  
+  return (
+    <div className="container mx-auto">
+      <Form method="get" className="mb-4">
+        <select name="category" defaultValue={category}>
+          <option value="">すべてのカテゴリ</option>
+          <option value="tech">技術</option>
+          <option value="design">デザイン</option>
+        </select>
+        <button type="submit" className="ml-2">フィルター</button>
+      </Form>
+      
+      <ArticleGrid articles={articles} />
+      
+      <Pagination currentPage={page} category={category} />
+    </div>
+  );
+}
+```
+
+### 4. ネストされたルートとモーダル
+
+```typescript
+// routes.ts でのルート設定
+export default [
+  layout("layouts/main.tsx", [
+    index("routes/articles.tsx"),
+    // モーダルルートを子ルートとして定義
+    route("articles/:id", "routes/article-detail.tsx")
+  ])
+] satisfies RouteConfig;
+
+// 親ルートコンポーネント
+export default function Articles({ loaderData, children }: Route.ComponentProps) {
+  const { articles } = loaderData;
+  
+  return (
+    <div className="container mx-auto">
+      <ArticleList articles={articles} />
+      <Outlet /> {/* モーダルやネストされた内容がここに表示される */}
+    </div>
+  );
+}
+
+// 子ルート（モーダル）コンポーネント
+export default function ArticleModal({ loaderData }: Route.ComponentProps) {
+  const { article } = loaderData;
+  
+  return (
+    <Dialog>
+      <DialogContent>
+        <h2>{article.title}</h2>
+        <p>{article.content}</p>
+        <Link to="/articles">閉じる</Link>
+      </DialogContent>
+    </Dialog>
+  );
+}
+```
+
+## コンポーネント再利用のベストプラクティス
+
+1. **コンポーネントの再利用と合成**
+   - 小さく単一責任のコンポーネントを作成
+   - プロパティによるバリエーション制御
+   - 合成パターンの活用
+
+```typescript
+// 基本的なカードコンポーネント
+function Card({ children, className = "" }) {
+  return (
+    <div className={`rounded-lg shadow-md p-4 ${className}`}>
+      {children}
+    </div>
+  );
+}
+
+// 特化したArticleCardコンポーネント
+function ArticleCard({ article, showActions = true }) {
+  return (
+    <Card className="bg-white hover:shadow-lg transition-shadow">
+      <h3 className="text-xl font-bold">{article.title}</h3>
+      <div className="mt-2 text-gray-600">{formatDate(article.createdAt)}</div>
+      
+      {showActions && (
+        <div className="mt-4 flex justify-between">
+          <LikeButton article={article} />
+          <ShareButton article={article} />
+        </div>
+      )}
+    </Card>
+  );
+}
+```
+
+## コードの分離と責務の分割
+
+1. コロケーション原則
+コロケーション（関連するコードを物理的に近くに配置する）の原則は、React Router v7の設計思想の中心です。以下の点に注意して実装します：
+
+- 関連するUI、ロジック、スタイルを近くに配置する
+- ルートごとにディレクトリを作成し、関連するすべてのファイルをグループ化
+- ドメインモデルや共通ロジックを適切なディレクトリに分離
+
+1. Action/Loader 分離パターンの応用
+
+複雑なルートではAction/Loaderを分離するさまざまなパターンを使用できます：
+
+### シンプルな分離パターン
+
+基本的な分離として、UIコンポーネントとデータ操作ロジックを分けます。
+
+```
+routes/
+└── articles/
+    ├── index.tsx     # UI + エクスポート
+    ├── loader.ts     # データ取得ロジック
+    └── action.ts     # データ更新ロジック
+```
+
+### ドメイン分離パターン
+
+より大規模なアプリケーションでは、ドメインロジックをさらに分離します。
+
+```
+routes/
+└── articles/
+    ├── index.tsx              # UIのみ
+    ├── loader.ts              # データ取得の調整
+    ├── action.ts              # アクション処理の調整
+    └── services/
+        ├── article-api.ts     # APIクライアント
+        ├── article-mapper.ts  # データマッピング
+        └── validators.ts      # バリデーションロジック
+```
+
+### 複数アクション管理パターン
+
+一つのルートで複数のアクションを処理する場合は、以下のようにスイッチ文で分岐処理します：
+
+```typescript
+// routes/articles.$id/action.ts
+export const articleAction = async ({ request, params }: ActionFunctionArgs) => {
+  const formData = await request.formData();
+  const { _action } = Object.fromEntries(formData);
+  
+  switch (_action) {
+    case "update": {
+      // 更新処理
+      return json({ status: "updated" });
+    }
+    case "delete": {
+      // 削除処理
+      return redirect("/articles");
+    }
+    case "publish": {
+      // 公開処理
+      return json({ status: "published" });
+    }
+    default:
+      return json({ error: "Unknown action" }, { status: 400 });
+  }
+};
+```
+
+複雑なアクションの場合は、さらに関数を分離します：
+
+```typescript
+// routes/articles.$id/action.ts
+import { handleUpdate, handleDelete, handlePublish } from "./action-handlers";
+
+export const articleAction = async (args: ActionFunctionArgs) => {
+  const formData = await args.request.formData();
+  const { _action } = Object.fromEntries(formData);
+  
+  switch (_action) {
+    case "update": return handleUpdate(args, formData);
+    case "delete": return handleDelete(args, formData);
+    case "publish": return handlePublish(args, formData);
+    default: return json({ error: "Unknown action" }, { status: 400 });
+  }
+};
+```
+
+## 実装上の注意点
+
+1. **レンダリング戦略の適切な選択**
+   - 認証情報を含む処理はSSRで実装（セキュリティ強化）
+   - 静的コンテンツはSSGで実装（パフォーマンス向上）
+   - インタラクティブなUIはCSRで実装（UX向上）
+   - 各ページの要件に応じた最適な戦略の選択
+
+2. **状態管理の適切な使い分け**
+   - アプリケーションの永続的な状態は URL に保持
+   - UI の一時的な状態（開閉状態など）は useState を使用
+   - 大規模な状態管理が必要な場合は Context API を検討
+
+3. **型安全性の確保**
+   - 厳格な型定義でコンパイル時のエラー検出
+   - API レスポンスの型を明示的に定義
+   - loaderData と actionData の型を適切に指定
+   - ドメインモデルの積極的な活用
+
+4. **パフォーマンス最適化**
+   - メモ化（useMemo, React.memo）の適切な使用
+   - 過度のリレンダリングを防ぐ設計
+   - 大きなデータセットの遅延読み込み
+   - 適切なレンダリング戦略の選択
+
+## 開発中の注意事項
+
+- React Router v7 は開発サーバー実行中に自動的に型を生成
+- `npm run dev` 実行中は `./+types` ディレクトリに型定義が自動生成される
+- 型エラーが発生しても、開発サーバーが起動していれば問題なし
+- `prerender()` 設定はビルド時にのみ適用される
+
+## ベストプラクティス集
+
+### コードの整理
+
+1. **ファイル名の規則性を保つ**
+    - ルートファイル：`index.tsx`
+    - データ取得：`loader.ts`
+    - データ更新：`action.ts`
+    - コンポーネント：`PascalCase.tsx`
+    - ユーティリティ：`kebab-case.ts`
+2. **コンポーネントの適切な分割**
+    - 500行以上のコンポーネントは分割を検討
+    - 単一の責務を持つ小さなコンポーネントを作成
+    - コンポーネントはプロパティを通じて設定可能にする
+3. **ドメインロジックとUIの分離**
+    - ビジネスロジックはドメイン層に配置
+    - UIロジックはコンポーネント内に維持
+    - API通信は専用サービスに分離
+
+### コラボレーション
+
+1. **変更の影響範囲を最小化**
+    - コロケーションによりファイル変更の影響を局所化
+    - 共通コンポーネントの変更は影響範囲に注意
+    - 型定義の変更はインターフェースの安定性を考慮
+2. **拡張性を考慮したコード設計**
+    - 将来的な機能追加を見据えた設計
+    - 抽象化のレベルを適切に保つ
+    - クリーンな依存関係グラフを維持
+
+## テスト戦略
+
+React Router v7アプリケーションのテストでは、純粋関数の分離とVitestの活用により、複雑なDOM操作を伴うテストを最小限に抑えられます。
+
+1. 純粋関数への分離によるテスト容易性の向上
+
+  - ビジネスロジックを純粋関数として実装し、UIから分離
+  - ローダーとアクションを独立したモジュールとして切り出し
+  - データ変換、検証ロジックも単独でテスト可能に
+
+2. ローダー/アクションのテスト
+
+  - リクエスト/レスポンスのモック
+  - フォームデータ処理の検証
+  - エラーハンドリングのテスト
+
+3. 最小限のモック使用
+
+  - 外部依存（API、DB）のみをモック化
+  - 純粋関数の利用でモックの必要性を最小化
+
+4. Vitestの効率的な活用
+
+  - パラレル実行によるテスト高速化
+  - ウォッチモードでの継続的テスト
+  - コードカバレッジの測定

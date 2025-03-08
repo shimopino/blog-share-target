@@ -1,7 +1,14 @@
-import { type RouteConfig, index, route } from "@react-router/dev/routes";
+import {
+	type RouteConfig,
+	index,
+	route,
+	layout,
+} from "@react-router/dev/routes";
 
 export default [
-	index("routes/home.tsx"),
-	route("not-found", "routes/not-found.tsx"),
-	route("shared", "routes/shared.tsx"),
+	layout("layouts/app.tsx", [
+		index("routes/home.tsx"),
+		route("shared", "routes/shared.tsx"),
+		route("not-found", "routes/not-found.tsx"),
+	]),
 ] satisfies RouteConfig;
