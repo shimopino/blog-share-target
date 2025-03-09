@@ -12,27 +12,6 @@ import type { Route } from "./+types/root";
 import "./app.css";
 import { registerServiceWorker } from "./sw-register";
 import { ThemeProvider } from "./contexts/ThemeContext";
-import { AuthProvider } from "./contexts/AuthContext";
-import { createAuthConfig } from "./services/auth";
-
-// 環境変数から認証設定を取得
-const authConfig = createAuthConfig({
-  userPoolId: process.env.COGNITO_USER_POOL_ID || '',
-  userPoolWebClientId: process.env.COGNITO_USER_POOL_CLIENT_ID || '',
-  region: process.env.AWS_REGION || 'ap-northeast-1',
-});
-
-// AuthProviderをクライアントサイドでのみレンダリングするように修正
-function AuthProviderWrapper({ children }: { children: React.ReactNode }) {
-  if (typeof window === 'undefined') {
-    return <>{children}</>;
-  }
-  return (
-    <AuthProvider config={authConfig}>
-      {children}
-    </AuthProvider>
-  );
-}
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -115,9 +94,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </head>
       <body className="h-full">
         <ThemeProvider>
-          <AuthProviderWrapper>
-            {children}
-          </AuthProviderWrapper>
+          {children}
         </ThemeProvider>
         <ScrollRestoration />
         <Scripts />
