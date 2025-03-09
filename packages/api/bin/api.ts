@@ -2,8 +2,39 @@
 import * as cdk from "aws-cdk-lib";
 import { ApiStack } from "../lib/api-stack";
 import { GitHubOidcRoleStack } from "../lib/github-oicd-stack";
+import { AuthStack } from "../lib/auth-stack";
+import * as dotenv from "dotenv";
+
+dotenv.config();
 
 const app = new cdk.App();
+
+const googleClientId = process.env.GOOGLE_CLIENT_ID;
+const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
+
+if (!googleClientId || !googleClientSecret) {
+	throw new Error("GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET must be set");
+}
+
+const authStack = new AuthStack(app, "WebShareTargetAuthStack", {
+	stage: "dev",
+	frontendUrls: [
+		"http://localhost:5173",
+		"https://d10hk2x3dbh227.cloudfront.net",
+	],
+	googleClientId,
+	googleClientSecret,
+	env: {
+		account: process.env.CDK_DEFAULT_ACCOUNT,
+		region: process.env.CDK_DEFAULT_REGION,
+	},
+	tags: {
+		Project: "WebShareTarget",
+		Environment: "Development",
+		Service: "Auth",
+	},
+});
+
 new ApiStack(app, "WebShareTargetApiStack", {
 	/* If you don't specify 'env', this stack will be environment-agnostic.
 	 * Account/Region-dependent features and context lookups will not work,
@@ -28,6 +59,9 @@ new ApiStack(app, "WebShareTargetApiStack", {
 		Environment: "Development",
 		Service: "API",
 	},
+
+	userPoolId: authStack.userPool.userPoolId,
+	userPoolClientId: authStack.userPoolClient.userPoolClientId,
 });
 
 new GitHubOidcRoleStack(app, "GitHubOidcRoleStack", {

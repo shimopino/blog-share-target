@@ -10,5 +10,6 @@ export default [
 		index("routes/home.tsx"),
 		route("shared", "routes/shared.tsx"),
 		route("not-found", "routes/not-found.tsx"),
+		route("login", "routes/login.tsx"),
 	]),
 ] satisfies RouteConfig;
