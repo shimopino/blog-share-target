@@ -10,8 +10,13 @@ import type { Construct } from "constructs";
 import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
 import { NodejsBuild } from "deploy-time-build";
 
+interface ApiStackProps extends cdk.StackProps {
+	readonly userPoolId: string;
+	readonly userPoolClientId: string;
+}
+
 export class ApiStack extends cdk.Stack {
-	constructor(scope: Construct, id: string, props?: cdk.StackProps) {
+	constructor(scope: Construct, id: string, props: ApiStackProps) {
 		super(scope, id, props);
 
 		// DynamoDB テーブルの作成
@@ -139,6 +144,10 @@ export class ApiStack extends cdk.Stack {
 			outputSourceDirectory: "build/client",
 			destinationBucket: websiteBucket,
 			distribution: distribution,
+			buildEnvironment: {
+				COGNITO_USER_POOL_ID: props.userPoolId,
+				COGNITO_USER_POOL_CLIENT_ID: props.userPoolClientId,
+			},
 		});
 
 		// CDK出力の定義
