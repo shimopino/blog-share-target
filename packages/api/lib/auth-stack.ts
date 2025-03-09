@@ -22,35 +22,7 @@ export class AuthStack extends cdk.Stack {
 		// Cognito User Pool
 		this.userPool = new cognito.UserPool(this, "BlogShareUserPool", {
 			userPoolName: `blog-share-user-pool-${props.stage}`,
-			selfSignUpEnabled: true,
-			signInAliases: {
-				email: true,
-			},
-			autoVerify: {
-				email: true,
-			},
-			standardAttributes: {
-				email: {
-					required: true,
-					mutable: true,
-				},
-				givenName: {
-					required: true,
-					mutable: true,
-				},
-				familyName: {
-					required: true,
-					mutable: true,
-				},
-			},
-			passwordPolicy: {
-				minLength: 8,
-				requireLowercase: true,
-				requireUppercase: true,
-				requireDigits: true,
-				requireSymbols: true,
-			},
-			accountRecovery: cognito.AccountRecovery.EMAIL_ONLY,
+			// Google認証のみをサポートするため、メールアドレスやパスワードの個別設定は何も設定しない
 		});
 
 		// Add Cognito Domain
