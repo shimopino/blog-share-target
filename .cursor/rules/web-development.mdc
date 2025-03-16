@@ -1,67 +1,78 @@
 ---
-description: Frontend Development Guide
+description: This Rule explains how to implement frontend by react, react router dom, tailwind css
 globs: packages/web/**/*
 alwaysApply: true
 ---
 
-このプロジェクトルールが参照されたことをチャットでユーザーに通知するために、このファイルを参照した場合は「オレは今からフロントを実装するぞ！ジョジョ！！」と叫んでください。
+# 000-frontend-implementation.mdc
+
+- このファイルが読み込まれたら「000-frontend-implementation.mdcを読み込みました伝えてください。
 
 必ず [fundamental.mdc](mdc:.cursor/rules/fundamental.mdc) を前提条件として読み込んでください。
 
-# フロントエンド開発ガイドライン
+--
 
 ## 技術スタック
 
-- **React**: v19.0.0
-- **React Router**: v7.0.0
-- **TypeScript**: v5.0.0
-- **Tailwind CSS**: v4.0.0
-- **Node.js**: v22.0.0
-- **Biome**: v1.9.0
+- React: ^v19.0.0
+- React Router: ^v7.3.0
+- TypeScript: ^v5.0.0
+- Tailwind CSS: ^v4.0.0
+- Node.js: ^v22.0.0
+- Biome: ^v1.9.0
 
-## 基本設計原則
+--
 
-### コンポーネント実装
+## React v19 の活用
 
-1. **純粋関数としてのコンポーネント設計**
+### 基本設計原則
+
+1. 純粋関数としてのコンポーネント設計
    - ロジックとUIを明確に分離する
    - 再利用可能なユーティリティ関数は個別に切り出す
    - プレゼンテーションとコンテナコンポーネントを分ける
 
-2. **コンポーネントライブラリ化**
+2. コンポーネントライブラリ化
    - ボタン、カード、フォームなど共通UIコンポーネントは再利用可能なライブラリとして実装
    - 一貫したスタイリングとプロパティ設計を維持
    - 類似コンポーネントはバリエーションとしてプロパティで制御
 
-3. **React Router v7 の活用**
-   - 状態管理を URL に集約（クエリパラメータ、パスパラメータ）
-   - データフェッチは loader 関数内に集約
-   - フォーム送信処理は action 関数内に集約
-   - URL を真実の源泉 (source of truth) として扱う
+
+## React Router v7 の活用
+
+### 基本設計原則
+
+- 状態管理を URL に集約（クエリパラメータ、パスパラメータ）
+- データフェッチは loader 関数内に集約
+- フォーム送信処理は action 関数内に集約
+- URL を真実の源泉 (source of truth) として扱う
 
 ### ルーティング設計
 
-1. **コンフィグベースのルーティング**
-   - `routes.ts` ファイルでアプリケーション全体のルーティングを集中管理
-   - `index()`, `route()`, `layout()`, `prefix()` 関数を活用した宣言的なルート定義
-   - 階層構造を視覚的に表現できるネスト構造の活用
+- `@react-router/fs-routes` を使用したファイルベースルーティング規約を採用する
+- ファイルベースルーティングでは以下の命名規約に従う
 
-2. **レイアウトシステムの活用**
-   - 共通UI要素（ヘッダー、サイドバー、フッターなど）はレイアウトコンポーネントとして実装
-   - `layout()` 関数と `<Outlet />` コンポーネントを使用したネスト構造の実現
-   - ルートごとの個別レイアウトとグローバルレイアウトの適切な使い分け
+  ```
+  app/
+  ├── routes/
+  │   ├── _index.tsx              # URLは "/" レイアウトは "app/root.tsx"
+  │   ├── about.tsx               # URLは "/about" レイアウトは "app/root.tsx"
+  │   ├── concerts.$city.tsx      # URLは "/concerts/san-diego" レイアウトは "app/root.tsx"
+  │   │                           # URLは "/concerts/new-york" レイアウトは "app/root.tsx"
+  │   └── concerts.trending.tsx   # URLは "/concerts/trending" レイアウトは "app/root.tsx"
+  └── root.tsx
+  ```
 
-3. **パスプレフィックスの活用**
-   - 機能やリソースごとに適切なURL構造の設計
-   - `prefix()` 関数によるパスのグループ化
-   - 一貫性のあるAPI的なURLパス設計
+- 共通UI要素（ヘッダー、サイドバー、フッターなど）はレイアウトコンポーネントとして実装
+- `<Outlet />` コンポーネントを使用したネスト構造の実現を採用する
+- 一貫性のあるAPIのようなURLパス設計を採用する
 
-## レンダリング戦略
+### レンダリング戦略
 
-### 1. サーバーサイドレンダリング (SSR)
+#### 1. サーバーサイドレンダリング (SSR)
 
-- **適用ケース**: データの取得が必要なページ、SEO重視のページ、APIキーなど機密情報を使用するページ
-- **実装方法**: `loader` 関数を使用したサーバーサイドでのデータ取得
+- 適用ケース: データの取得が必要なページ、SEO重視のページ、APIキーなど機密情報を使用するページ
+- 実装方法: `loader` 関数を使用したサーバーサイドでのデータ取得
 
 ```typescript
 // SSR用のloader関数
@@ -86,10 +97,10 @@ export default function Article({ loaderData }: Route.ComponentProps) {
 }
 ```
 
-### 2. 静的サイト生成 (SSG)
+#### 2. 静的サイト生成 (SSG)
 
-- **適用ケース**: 更新頻度の低いページ、ブログ記事、ドキュメント、ランディングページ
-- **実装方法**: `react-router.config.ts` の `prerender` 関数でパスを指定
+- 適用ケース: 更新頻度の低いページ、ブログ記事、ドキュメント、ランディングページ
+- 実装方法: `react-router.config.ts` の `prerender` 関数でパスを指定
 
 ```typescript
 // react-router.config.ts
@@ -109,10 +120,10 @@ export default {
 } satisfies Config;
 ```
 
-### 3. クライアントサイドレンダリング (CSR)
+#### 3. クライアントサイドレンダリング (CSR)
 
-- **適用ケース**: インタラクティブなコンポーネント、検索機能、管理画面、頻繁に更新が必要なUI
-- **実装方法**: `clientLoader` 関数または `useFetcher` を使用
+- 適用ケース: インタラクティブなコンポーネント、検索機能、管理画面、頻繁に更新が必要なUI
+- 実装方法: `clientLoader` 関数または `useFetcher` を使用
 
 ```typescript
 // CSR用のclientLoader関数
@@ -136,9 +147,9 @@ export default function ArticleList({ loaderData }: Route.ComponentProps) {
 }
 ```
 
-## インタラクティブUI実装
+### インタラクティブUI実装
 
-### 1. フォーム送信パターン
+#### 1. フォーム送信パターン
 
 ```typescript
 // サーバーサイド処理用 action 関数
@@ -168,7 +179,7 @@ export default function CreateArticle({ actionData }: Route.ComponentProps) {
 }
 ```
 
-### 2. クライアントアクション処理パターン
+#### 2. クライアントアクション処理パターン
 
 ```typescript
 // クライアントサイドで処理するaction
@@ -219,7 +230,7 @@ export default function SearchPage() {
 }
 ```
 
-### 3. クエリパラメータによる状態管理
+#### 3. クエリパラメータによる状態管理
 
 ```typescript
 // クエリパラメータでフィルタリング・ページング
@@ -256,49 +267,9 @@ export default function ArticleList({ loaderData }: Route.ComponentProps) {
 }
 ```
 
-### 4. ネストされたルートとモーダル
+### コンポーネント再利用のベストプラクティス
 
-```typescript
-// routes.ts でのルート設定
-export default [
-  layout("layouts/main.tsx", [
-    index("routes/articles.tsx"),
-    // モーダルルートを子ルートとして定義
-    route("articles/:id", "routes/article-detail.tsx")
-  ])
-] satisfies RouteConfig;
-
-// 親ルートコンポーネント
-export default function Articles({ loaderData, children }: Route.ComponentProps) {
-  const { articles } = loaderData;
-  
-  return (
-    <div className="container mx-auto">
-      <ArticleList articles={articles} />
-      <Outlet /> {/* モーダルやネストされた内容がここに表示される */}
-    </div>
-  );
-}
-
-// 子ルート（モーダル）コンポーネント
-export default function ArticleModal({ loaderData }: Route.ComponentProps) {
-  const { article } = loaderData;
-  
-  return (
-    <Dialog>
-      <DialogContent>
-        <h2>{article.title}</h2>
-        <p>{article.content}</p>
-        <Link to="/articles">閉じる</Link>
-      </DialogContent>
-    </Dialog>
-  );
-}
-```
-
-## コンポーネント再利用のベストプラクティス
-
-1. **コンポーネントの再利用と合成**
+1. コンポーネントの再利用と合成
    - 小さく単一責任のコンポーネントを作成
    - プロパティによるバリエーション制御
    - 合成パターンの活用
@@ -331,7 +302,7 @@ function ArticleCard({ article, showActions = true }) {
 }
 ```
 
-## コードの分離と責務の分割
+### コードの分離と責務の分割
 
 1. コロケーション原則
 コロケーション（関連するコードを物理的に近くに配置する）の原則は、React Router v7の設計思想の中心です。以下の点に注意して実装します：
@@ -422,24 +393,24 @@ export const articleAction = async (args: ActionFunctionArgs) => {
 
 ## 実装上の注意点
 
-1. **レンダリング戦略の適切な選択**
+1. レンダリング戦略の適切な選択
    - 認証情報を含む処理はSSRで実装（セキュリティ強化）
    - 静的コンテンツはSSGで実装（パフォーマンス向上）
    - インタラクティブなUIはCSRで実装（UX向上）
    - 各ページの要件に応じた最適な戦略の選択
 
-2. **状態管理の適切な使い分け**
+2. 状態管理の適切な使い分け
    - アプリケーションの永続的な状態は URL に保持
    - UI の一時的な状態（開閉状態など）は useState を使用
    - 大規模な状態管理が必要な場合は Context API を検討
 
-3. **型安全性の確保**
+3. 型安全性の確保
    - 厳格な型定義でコンパイル時のエラー検出
    - API レスポンスの型を明示的に定義
    - loaderData と actionData の型を適切に指定
    - ドメインモデルの積極的な活用
 
-4. **パフォーマンス最適化**
+4. パフォーマンス最適化
    - メモ化（useMemo, React.memo）の適切な使用
    - 過度のリレンダリングを防ぐ設計
    - 大きなデータセットの遅延読み込み
@@ -452,59 +423,4 @@ export const articleAction = async (args: ActionFunctionArgs) => {
 - 型エラーが発生しても、開発サーバーが起動していれば問題なし
 - `prerender()` 設定はビルド時にのみ適用される
 
-## ベストプラクティス集
 
-### コードの整理
-
-1. **ファイル名の規則性を保つ**
-    - ルートファイル：`index.tsx`
-    - データ取得：`loader.ts`
-    - データ更新：`action.ts`
-    - コンポーネント：`PascalCase.tsx`
-    - ユーティリティ：`kebab-case.ts`
-2. **コンポーネントの適切な分割**
-    - 500行以上のコンポーネントは分割を検討
-    - 単一の責務を持つ小さなコンポーネントを作成
-    - コンポーネントはプロパティを通じて設定可能にする
-3. **ドメインロジックとUIの分離**
-    - ビジネスロジックはドメイン層に配置
-    - UIロジックはコンポーネント内に維持
-    - API通信は専用サービスに分離
-
-### コラボレーション
-
-1. **変更の影響範囲を最小化**
-    - コロケーションによりファイル変更の影響を局所化
-    - 共通コンポーネントの変更は影響範囲に注意
-    - 型定義の変更はインターフェースの安定性を考慮
-2. **拡張性を考慮したコード設計**
-    - 将来的な機能追加を見据えた設計
-    - 抽象化のレベルを適切に保つ
-    - クリーンな依存関係グラフを維持
-
-## テスト戦略
-
-React Router v7アプリケーションのテストでは、純粋関数の分離とVitestの活用により、複雑なDOM操作を伴うテストを最小限に抑えられます。
-
-1. 純粋関数への分離によるテスト容易性の向上
-
-  - ビジネスロジックを純粋関数として実装し、UIから分離
-  - ローダーとアクションを独立したモジュールとして切り出し
-  - データ変換、検証ロジックも単独でテスト可能に
-
-2. ローダー/アクションのテスト
-
-  - リクエスト/レスポンスのモック
-  - フォームデータ処理の検証
-  - エラーハンドリングのテスト
-
-3. 最小限のモック使用
-
-  - 外部依存（API、DB）のみをモック化
-  - 純粋関数の利用でモックの必要性を最小化
-
-4. Vitestの効率的な活用
-
-  - パラレル実行によるテスト高速化
-  - ウォッチモードでの継続的テスト
-  - コードカバレッジの測定
